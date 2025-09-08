@@ -1,0 +1,101 @@
+---
+config:
+  layout: elk
+---
+classDiagram
+    class IApi~TCreateBody, TCreatedObject~ {
+        <<interface>>
+        +get(params?: any) Promise~TCreatedObject[]~
+        +post(body: TCreateBody) Promise~TCreatedObject~
+        +delete(id: string) Promise~void~
+    }
+    class AuthService {
+        -token: string
+        +constructor(token: string)
+        +getAuthHeaders() Record~string, string~
+        +refreshToken() Promise~void~
+    }
+    class Api~TCreateBody, TCreatedObject~ {
+        <<abstract>>
+        #baseUrl: string
+        #auth: AuthService
+        +constructor(baseUrl: string, auth: AuthService)
+        +get(params?: any)* Promise~TCreatedObject[]~
+        +post(body: TCreateBody)* Promise~TCreatedObject~
+        +delete(id: string)* Promise~void~
+    }
+    class Generator~TCreateBody, TCreatedObject~ {
+        <<abstract>>
+        -_createdObjects: TCreatedObject[]
+        #_api: IApi~TCreateBody, TCreatedObject~
+        +constructor(api: IApi~TCreateBody, TCreatedObject~)
+        +generate()* Promise~TCreateBody~
+        +generateAndPost() Promise~TCreatedObject~
+        +cleanup() Promise~void~
+    }
+    class UserCreateBody {
+        <<interface>>
+        +name: string
+        +email: string
+        +roleId?: string
+    }
+    class CreatedUser {
+        <<interface>>
+        +id: string
+        +name: string
+        +email: string
+        +roleId?: string
+        +createdAt: string
+    }
+    class ProjectCreateBody {
+        <<interface>>
+        +name: string
+        +description: string
+        +ownerId: string
+    }
+    class CreatedProject {
+        <<interface>>
+        +id: string
+        +name: string
+        +description: string
+        +ownerId: string
+        +createdAt: string
+    }
+    class UserApi {
+        +constructor(baseUrl: string, auth: AuthService)
+        +get(params?: any) Promise~CreatedUser[]~
+        +post(body: UserCreateBody) Promise~CreatedUser~
+        +delete(id: string) Promise~void~
+    }
+    class ProjectApi {
+        +constructor(baseUrl: string, auth: AuthService)
+        +get(params?: any) Promise~CreatedProject[]~
+        +post(body: ProjectCreateBody) Promise~CreatedProject~
+        +delete(id: string) Promise~void~
+    }
+    class UserGenerator {
+        +constructor(api: UserApi)
+        +generate() Promise~UserCreateBody~
+    }
+    class ProjectGenerator {
+        -userGenerator: UserGenerator
+        +constructor(api: ProjectApi, userApi: UserApi)
+        +generate() Promise~ProjectCreateBody~
+        +cleanup() Promise~void~
+    }
+    Api~TCreateBody, TCreatedObject~ ..|> IApi~TCreateBody, TCreatedObject~ : implements
+    Api~TCreateBody, TCreatedObject~ --> AuthService : uses
+    UserApi --|> Api~UserCreateBody, CreatedUser~ : extends
+    ProjectApi --|> Api~ProjectCreateBody, CreatedProject~ : extends
+    UserApi ..> UserCreateBody : uses
+    UserApi ..> CreatedUser : creates
+    ProjectApi ..> ProjectCreateBody : uses
+    ProjectApi ..> CreatedProject : creates
+    Generator~TCreateBody, TCreatedObject~ --> IApi~TCreateBody, TCreatedObject~ : uses
+    UserGenerator --|> Generator~UserCreateBody, CreatedUser~ : extends
+    ProjectGenerator --|> Generator~ProjectCreateBody, CreatedProject~ : extends
+    UserGenerator --> UserApi : uses
+    ProjectGenerator --> ProjectApi : uses
+    ProjectGenerator --> UserGenerator : creates internally
+    UserGenerator ..> UserCreateBody : generates
+    ProjectGenerator ..> ProjectCreateBody : generates
