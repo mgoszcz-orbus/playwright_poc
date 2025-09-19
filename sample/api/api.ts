@@ -12,8 +12,8 @@ export abstract class Api<TCreateBody, TCreatedObject>
   protected baseUrl: string;
   protected auth: AuthService;
 
-  constructor(baseUrl: string, auth: AuthService) {
-    this.baseUrl = baseUrl;
+  constructor(auth: AuthService) {
+    this.baseUrl = getBaseUrl();
     this.auth = auth;
   }
 
